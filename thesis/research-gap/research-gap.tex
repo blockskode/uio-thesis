@@ -103,11 +103,11 @@ and grouped one folder per section. They are grouped by what a method does,
 not by which architecture it uses, because the same architecture appears in
 several roles and the roles are what the argument turns on.
 
-The recurring finding is that every family succeeds inside the distribution it
-was trained on, and that the frontier is the same in all of them: unseen
+The recurring finding is that every family works inside the distribution it
+was trained on, and that they all stop at the same three obstacles: unseen
 boundary conditions, unseen geometries and, at the atomistic scale, unseen
-chemistries. \Cref{sec:matrix} states that as a table, and the row marked open
-is the thesis contribution.
+chemistries. \Cref{sec:matrix} sets this out as a table, and the row that no
+paper fills, both obstacles tested together, is the thesis contribution.
 
 \section{How to read this survey}
 
@@ -481,9 +481,9 @@ inputs it has not seen.
   temporal bundling and the pushforward trick, that tame autoregressive error.
 \end{description}
 
-\subsection{What remains open: the frontier this project targets}
+\subsection{What remains open: what this project targets}
 
-Before the frontier papers, the position of the three foundations should be
+Before the two gap papers, the position of the three foundations should be
 stated precisely, because it is easy to overstate. None of DeepONet, the graph
 kernel network or FNO varies the domain shape in any experiment: the domains
 are an interval, a unit square and a torus. None tests a single trained model
@@ -533,7 +533,7 @@ suggests.
   a graph network named as future work (appendix~H.4 and appendix~G).
 \end{description}
 
-Now the gap. Three papers sit at this frontier: Mousavi et al.\ and Huang
+Now the gap. Three papers sit closest to it: Mousavi et al.\ and Huang
 et al.\ just described, and Brandstetter et al.\ from the previous
 subsection. Two things can vary between training and deployment, the type of
 boundary condition and the shape of the domain. Each of the three papers
@@ -853,12 +853,12 @@ control layer over solvers and not a route to learning the physics itself.
 
 Machine-learned interatomic potentials (MLIPs) replace density functional
 theory (DFT) inside molecular dynamics, and that community has arrived independently at
-the same frontier as the PDE community. The parallel is close enough to be
+the same obstacle as the PDE community. The parallel is close enough to be
 useful: chemistry is to a potential what boundary conditions and geometry are
 to an operator, namely the thing the model was never shown and is expected to
 handle anyway.
 
-\subsection{The frontier, stated by the field itself}
+\subsection{The obstacle, stated by the field itself}
 
 \begin{description}[style=nextline]
   \item[Creed et al., six open questions~\citep{sixquestions}]
@@ -980,7 +980,7 @@ spirit, they are stuck on the same step.
     out of distribution~\citep{structpreserving} \\
     \addlinespace
     \textbf{Both together, in one experiment} &
-    \textbf{open} & each frontier paper closes one axis and fixes the
+    \textbf{open} & each of the three closest papers handles one and fixes the
     other~\citep{bcextension, domaindecomp, brandstetter} \\
     \addlinespace
     \textbf{Unseen chemistries (atomistic)} &
@@ -1000,10 +1000,10 @@ spirit, they are stuck on the same step.
 
 Three observations close the survey.
 
-Every family performs inside its training distribution, and the frontier
-is the same everywhere: the axes along which real applications vary, since
-every patient, reservoir and molecule is a new boundary condition,
-geometry or chemistry.
+Every family performs inside its training distribution, and every family
+stops in the same place: at the things real applications vary, since every
+patient, reservoir and molecule is a new boundary condition, geometry or
+chemistry.
 
 The most promising lever reported so far is structure in the architecture
 rather than volume of data~\citep{structpreserving, hnn}, which is a
