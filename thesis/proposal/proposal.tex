@@ -1,0 +1,107 @@
+% ============================================================
+% Master thesis proposal
+% Computational Science: Physics, University of Oslo
+%
+% Build:  tectonic proposal.tex        (or: make)
+% Edit:   write in sections/*.tex, not in this file.
+% ============================================================
+\documentclass[11pt, a4paper]{article}
+\input{preamble}
+
+% ------------------------------------------------------------
+% Fill in these three, then they propagate through the document.
+% ------------------------------------------------------------
+\newcommand{\thesistitle}{Graph Neural Networks That generalises to unseen domains and boundary conditions}
+%\newcommand{\thesissubtitle}{Generalisation to unseen boundary conditions and domains}
+\newcommand{\authorname}{Yapi Donatien Achou}
+\newcommand{\supervisorname}{Morten Hjorth-Jensen}
+\newcommand{\programmename}{Computational Science: Physics}
+\newcommand{\institution}{University of Oslo}
+
+\begin{document}
+
+% ============================================================
+% Title page
+% ============================================================
+\begin{titlepage}
+\centering
+\vspace*{25mm}
+
+{\Large\scshape Master Thesis Proposal\par}
+\vspace{16mm}
+
+{\LARGE\bfseries \thesistitle \par}
+% subtitle merged into the title; re-enable these two lines to use it again
+% \vspace{5mm}
+% {\large \thesissubtitle \par}
+
+\vspace{20mm}
+{\large \authorname \par}
+\vspace{4mm}
+{\normalsize Supervisor: \supervisorname \par}
+
+\vfill
+{\normalsize \programmename \par}
+{\normalsize \institution \par}
+\vspace{4mm}
+{\normalsize \today \par}
+\vspace*{20mm}
+\end{titlepage}
+
+% ============================================================
+% Abstract
+% ============================================================
+\begin{abstract}
+\noindent
+% write here
+\end{abstract}
+
+% Optional acknowledgement of AI assistance, since the literature research
+% was done with Claude Code at the supervisor's suggestion. Uncomment and
+% adapt if you want it in the document:
+%
+% \paragraph*{Note on AI assistance.}
+% The literature survey and gap analysis behind this proposal were carried
+% out interactively with Claude Code (Anthropic), at the suggestion of the
+% supervisor. The text of this proposal is written by the author, and all
+% claims and citations have been reviewed by the author.
+
+\vspace{6mm}
+\tableofcontents
+\newpage
+
+% ============================================================
+% Body. VERSION 1: three sections only, kept deliberately simple
+% for the first round with the supervisor. The full seven-section
+% structure (01-...07-*.tex) stays in sections/ for later
+% iterations; swap the \input lines when the time comes.
+% ============================================================
+\input{sections/v1-research-gap}
+\input{sections/v1-proposed-approach}
+\input{sections/v1-plan}
+
+% Full structure for later versions:
+% \input{sections/01-introduction}
+% \input{sections/02-background}
+% \input{sections/03-research-questions}
+% \input{sections/04-method}
+% \input{sections/05-workplan}
+% \input{sections/06-contribution}
+% \input{sections/07-risks}
+
+% ============================================================
+% Bibliography
+% ============================================================
+\newpage
+\addcontentsline{toc}{section}{References}
+\bibliography{references}
+
+% ============================================================
+% Appendices. Delete if not needed.
+% ============================================================
+% \newpage
+% \appendix
+% \section{Appendix title}
+% \todo{appendix content}
+
+\end{document}

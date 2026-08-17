@@ -1,0 +1,128 @@
+% ============================================================
+% Preamble for the master thesis proposal.
+% Edit fonts, margins and macros here, not in proposal.tex.
+% ============================================================
+
+% ---------- encoding and fonts ----------
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% ---------- page layout ----------
+\usepackage[a4paper, margin=27mm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+\usepackage{parskip}
+
+% ---------- mathematics ----------
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage{bm}
+\usepackage{siunitx}          % \SI{9.81}{\meter\per\second\squared}
+\sisetup{separate-uncertainty = true}
+
+% ---------- figures and tables ----------
+\usepackage{graphicx}
+\graphicspath{{figures/}}
+\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage[font=small, labelfont=bf]{caption}
+
+% ---------- lists ----------
+\usepackage{enumitem}
+\setlist{itemsep=3pt, topsep=5pt}
+
+% ---------- code listings ----------
+\usepackage{listings}
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=lines,               % thin rules above and below, no side lines
+  rulecolor=\color{black!30},
+  captionpos=b,
+  showstringspaces=false
+}
+
+% ---------- colour (kept minimal) ----------
+\usepackage[dvipsnames]{xcolor}
+
+% ---------- headers: clean academic, no rules, just page numbers ----------
+\pagestyle{plain}
+
+% ---------- section styling ----------
+\usepackage{titlesec}
+\titleformat{\section}{\large\bfseries}{\thesection}{0.7em}{}
+\titlespacing{\section}{0pt}{18pt}{7pt}
+\titleformat{\subsection}{\bfseries}{\thesubsection}{0.6em}{}
+\titlespacing{\subsection}{0pt}{13pt}{4pt}
+
+% ---------- theorem-like environments ----------
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+% ---------- boxes for highlighted statements ----------
+\usepackage{mdframed}
+\mdfsetup{skipabove=12pt, skipbelow=12pt}
+% keybox: thin horizontal rules above and below only, no vertical sides.
+\newenvironment{keybox}
+  {\begin{mdframed}[linewidth=0.5pt, topline=true, bottomline=true,
+     leftline=false, rightline=false,
+     innertopmargin=8pt, innerbottommargin=10pt,
+     innerleftmargin=0pt, innerrightmargin=0pt]}
+  {\end{mdframed}}
+
+% ---------- bibliography ----------
+% natbib + bibtex, both bundled with tectonic, so the document
+% builds anywhere with no extra tools installed.
+% Cite with \cite{key} or \citet{key} for "Author (year)" style.
+\usepackage[numbers, sort&compress]{natbib}
+\bibliographystyle{unsrtnat}      % numbered in order of first citation
+
+% ---------- links and cross-references ----------
+\usepackage[hidelinks]{hyperref}
+\usepackage[capitalise, noabbrev]{cleveref}
+
+% ============================================================
+% Drafting helpers. Set \draftmode to false before submitting:
+% notes and the TODO list then disappear from the output.
+% ============================================================
+\newif\ifdraftmode
+\draftmodetrue          % <-- set to \draftmodefalse for the final version
+
+\usepackage{xparse}
+\NewDocumentCommand{\todo}{m}{%
+  \ifdraftmode\textcolor{BrickRed}{\textbf{[TODO: #1]}}\fi}
+\NewDocumentCommand{\note}{m}{%
+  \ifdraftmode\textcolor{RoyalBlue}{\textit{[note: #1]}}\fi}
+
+% ============================================================
+% Notation macros. Add your own here so the notation stays
+% consistent across sections; change it once, it changes
+% everywhere.
+% ============================================================
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\vect}[1]{\bm{#1}}              % vectors: \vect{u}
+\newcommand{\mat}[1]{\bm{#1}}               % matrices: \mat{A}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\abs}[1]{\left\lvert #1 \right\rvert}
+\newcommand{\inner}[2]{\left\langle #1, #2 \right\rangle}
+\newcommand{\T}{\mathsf{T}}                 % transpose: A^\T
+\newcommand{\inv}{^{-1}}
+\newcommand{\ket}[1]{\lvert #1 \rangle}     % quantum notation
+\newcommand{\bra}[1]{\langle #1 \rvert}
+\newcommand{\braket}[2]{\langle #1 \vert #2 \rangle}
+\newcommand{\op}[1]{\hat{#1}}
+\newcommand{\pd}[2]{\frac{\partial #1}{\partial #2}}
+\newcommand{\dd}{\mathrm{d}}
+\DeclareMathOperator{\diver}{div}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator{\rank}{rank}
+\DeclareMathOperator{\diag}{diag}
