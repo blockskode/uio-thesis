@@ -5,7 +5,7 @@ cd "$(dirname "$0")"
 mkdir -p pdfs
 fetch () {
   if [ -s "pdfs/$2" ]; then echo "have    $2"; return; fi
-  if curl -fsSL "https://arxiv.org/pdf/$1" -o "pdfs/$2"; then echo "fetched $2"
+  if curl -fsSL "https://arxiv.org/pdf/$1" -o "pdfs/$2"; then echo "fetched $2"; sleep 1  # be polite to arXiv
   else echo "FAILED  $2  (arXiv:$1)"; rm -f "pdfs/$2"; fi
 }
 fetch 2511.02481 nows-neural-operator-warm-starts.pdf

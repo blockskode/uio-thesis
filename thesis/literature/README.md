@@ -2,8 +2,19 @@
 
 One folder per method family of the research-gap survey
 (`../research-gap/research-gap.pdf`). Each folder contains a `README.md`
-index, the papers used by the survey in `pdfs/`, and a `fetch.sh` script for
-papers that can be retrieved from arXiv.
+index of its papers and a `fetch.sh` script that downloads them from arXiv
+into a git-ignored `pdfs/` directory.
+
+## Getting the papers
+
+The PDFs are not stored in this repository. Fetch them all:
+
+```bash
+for d in */; do "$d/fetch.sh"; done
+```
+
+or one family at a time, for example `./pinn/fetch.sh`. Papers already
+downloaded are skipped, so the scripts are safe to rerun.
 
 | Folder | Survey section | Papers |
 |---|---|---|
@@ -21,4 +32,6 @@ and the Nature Communications paper on cross-domain MLIP transfer. Read those
 through university access.
 
 The papers remain the intellectual property of their respective authors and
-publishers and are included here for academic reference.
+publishers. This repository distributes only the index and the download
+scripts, never the files themselves. Please do not redistribute what you
+download.

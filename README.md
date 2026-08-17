@@ -42,13 +42,35 @@ The compiled document is also available as
 
 ## Literature
 
-The [`thesis/literature/`](thesis/literature/) directory contains the papers
-used in the survey, organised by method family. Each family includes an index
-describing its papers and, where available, a script for retrieving them from
-arXiv.
+The [`thesis/literature/`](thesis/literature/) directory indexes the papers
+used in the survey, organised by method family. Each family folder holds a
+`README.md` listing its papers with the corresponding survey section, and a
+`fetch.sh` script that downloads them.
+
+**The PDFs themselves are not distributed in this repository.** They are
+retrieved from arXiv on request, so each reader obtains the papers from the
+publisher under the terms that apply to them. To fetch all of them:
+
+```bash
+cd thesis/literature
+for d in */; do "$d/fetch.sh"; done
+```
+
+Or one family at a time:
+
+```bash
+thesis/literature/pinn/fetch.sh
+```
+
+The scripts are idempotent: papers already present are skipped, so rerunning
+costs nothing. Files land in each family's `pdfs/` directory, which is
+git-ignored.
+
+Two survey references are journal-only and cannot be fetched from arXiv; they
+are noted in the literature index and need university access.
 
 The papers remain the intellectual property of their respective authors and
-publishers and are included here for academic reference.
+publishers. Please do not redistribute the downloaded files.
 
 ## Status
 
