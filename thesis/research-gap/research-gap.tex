@@ -111,9 +111,28 @@ paper fills, both obstacles tested together, is the thesis contribution.
 
 \section{How to read this survey}
 
-Each method family gets three parts: the idea in a few sentences, what the
-family has solved with the papers that showed it, and what remains open.
-Paper summaries are deliberately short; the papers themselves are in
+Seven families of methods are covered, one per section:
+
+\begin{enumerate}[itemsep=1pt, topsep=4pt]
+  \item Physics-informed neural networks, which put the equation in the loss
+  (\cref{sec:pinn}).
+  \item Learned simulators on graphs, which learn the time-stepping map
+  (\cref{sec:simulators}).
+  \item Neural operators, which learn a whole family of problems at once
+  (\cref{sec:operators}).
+  \item Physics built into the architecture, so that the law holds by
+  construction (\cref{sec:structure}).
+  \item Hybrid methods, which keep the classical solver and only make it
+  faster (\cref{sec:hybrid}).
+  \item Reinforcement learning, which decides where to spend compute rather
+  than what the answer is (\cref{sec:rl}).
+  \item Atomistic and self-consistent-field methods, where the same question
+  appears at the quantum scale (\cref{sec:atomistic}).
+\end{enumerate}
+
+Each family gets three parts: the idea in a few sentences, what the family
+has solved with the papers that showed it, and what remains open. Paper
+summaries are deliberately short; the papers themselves are in
 \literaturelink{} for deep reading.
 
 Every displayed equation and every quoted number carries a pointer into its
