@@ -3,16 +3,25 @@
 This repository contains preparatory work for a master's thesis in
 Computational Science: Physics at the University of Oslo.
 
-The project investigates whether machine-learning models—especially graph
-neural networks—can learn physical dynamics from simulation data and
-generalise beyond their training distribution to unseen boundary conditions
-and geometries.
+The project investigates whether a graph neural network can learn physical
+laws from simulation data and generalise beyond its training distribution to
+unseen boundary and initial conditions and unseen domains.
+
+The question is asked at two scales, continuum mechanics (porous media flow)
+and quantum mechanics (Kohn-Sham density functional theory), with one trained
+model per scale. What carries across the scales is the architecture family,
+the question, and the evaluation protocol, not the weights.
+
+At each scale the model is evaluated in two modes: as a surrogate that
+replaces the solver, measured by accuracy on unseen conditions and geometry,
+and as a warm start that seeds the solver, measured by iterations and time
+saved while the solver still guarantees correctness.
 
 ## Repository structure
 
-- [`thesis/research-gap/`](thesis/research-gap/) — research-gap survey in
+- [`thesis/research-gap/`](thesis/research-gap/): research-gap survey in
   LaTeX and PDF form
-- [`thesis/literature/`](thesis/literature/) — papers grouped by method family
+- [`thesis/literature/`](thesis/literature/): papers grouped by method family
 
 The research-gap survey compares seven families of methods:
 
