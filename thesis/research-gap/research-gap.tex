@@ -126,9 +126,10 @@ named place.
 
 \subsection{The idea}
 
-A network $u_\theta(t, x)$ represents one solution of one problem, with
-$\theta$ the network weights, $t$ time and $x$ the space coordinate. The
-differential equation itself becomes the loss. Write the equation as eq.~(1)
+A physics-informed neural network (PINN) uses a network $u_\theta(t, x)$ to
+represent one solution of one problem, with $\theta$ the network weights, $t$
+time and $x$ the space coordinate. The partial differential equation (PDE)
+itself becomes the loss. Write the equation as eq.~(1)
 of Raissi, Perdikaris and Karniadakis, part~I~\citep{raissi1} does,
 %
 \begin{equation}
@@ -355,7 +356,8 @@ rate and a plain Euler step turns that into the next state.
   physics claims it makes are citations to earlier work, not results of its
   own, so this survey uses it for vocabulary and for the argument that
   locality and permutation symmetry are the right inductive biases.
-  \item[Sanchez-Gonzalez et al., GNS~\citep{sanchez2020}]
+  \item[Sanchez-Gonzalez et al., graph network-based simulators,
+  GNS~\citep{sanchez2020}]
   Particle-based simulation of water, sand and deformable material in one
   framework. Particles are nodes, edges join particles within a fixed radius
   and are rebuilt every step as material moves, the network predicts
@@ -431,8 +433,8 @@ inputs it has not seen.
   the query location goes to a trunk network, and the output is their dot
   product, eq.~(2) of Lu et al., a form justified by the operator
   universal-approximation statement of their eq.~(1). Their Theorem~2 bounds
-  the number of sensors needed for a target accuracy on an ODE operator, which
-  is rare in this literature. On a diffusion-reaction problem the test error
+  the number of sensors needed for a target accuracy on an ordinary
+  differential equation (ODE) operator, which is rare in this literature. On a diffusion-reaction problem the test error
   reaches about $10^{-5}$ from only 100 input-function samples (\S{}4.3). Note a
   structural consequence of the design: the sensor locations must match
   between training and deployment, so this architecture cannot change
@@ -448,7 +450,7 @@ inputs it has not seen.
   (fig.~1 and Table~1 of Li et al.), with error essentially flat from $85$ to
   $421$ points where a convolutional baseline degrades from $0.0253$ to
   $0.1097$ (Table~8).
-  \item[Li et al., Fourier neural operator~\citep{fno}]
+  \item[Li et al., Fourier neural operator, FNO~\citep{fno}]
   The standard baseline, obtained by restricting the kernel to a convolution
   and parameterising it in Fourier space, eqs.~(3) and~(4) of the FNO paper,
   keeping only the lowest twelve modes for the two-dimensional cases. It is
@@ -661,7 +663,7 @@ in which a wrong prediction costs time rather than trust.
 \subsection{What this family has solved}
 
 \begin{description}[style=nextline]
-  \item[Eshaghi et al., NOWS~\citep{nows}]
+  \item[Eshaghi et al., neural operator warm starts, NOWS~\citep{nows}]
   The cleanest statement of the warm-start idea. A neural operator trained
   offline maps the problem specification to an approximate solution, and that
   prediction is used only as the initial guess $u_0 = \mathcal{G}_\theta(a)$
@@ -848,8 +850,8 @@ control layer over solvers and not a route to learning the physics itself.
 
 \subsection{Why this section exists}
 
-Machine-learned interatomic potentials replace density functional theory
-inside molecular dynamics, and that community has arrived independently at
+Machine-learned interatomic potentials (MLIPs) replace density functional
+theory (DFT) inside molecular dynamics, and that community has arrived independently at
 the same frontier as the PDE community. The parallel is close enough to be
 useful: chemistry is to a potential what boundary conditions and geometry are
 to an operator, namely the thing the model was never shown and is expected to
@@ -901,7 +903,8 @@ handle anyway.
 \subsection{The solver side: learned initial guesses}
 
 \begin{description}[style=nextline]
-  \item[Eberhard et al., SAIL~\citep{sail}]
+  \item[Eberhard et al., solver-aligned initialisation learning,
+  SAIL~\citep{sail}]
   The atomistic twin of the warm-start idea of \cref{sec:hybrid}, and an
   equivariant graph network. Instead of fitting a converged ground state, it
   learns the starting point of the self-consistent field cycle by
