@@ -10,11 +10,9 @@ and geometries.
 
 ## Repository structure
 
-```text
-thesis/
-├── research-gap/   # Research-gap survey in LaTeX and PDF form
-└── literature/     # Papers grouped by method family
-```
+- [`thesis/research-gap/`](thesis/research-gap/) — research-gap survey in
+  LaTeX and PDF form
+- [`thesis/literature/`](thesis/literature/) — papers grouped by method family
 
 The research-gap survey compares seven families of methods:
 
