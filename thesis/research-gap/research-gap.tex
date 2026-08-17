@@ -62,13 +62,13 @@ At each scale the model is used in two ways:
 
 \begin{description}[style=unboxed, leftmargin=0pt, itemsep=2pt,
     font=\normalfont\itshape]
-  \item[Surrogate mode.] The model replaces the solver, and is measured by
-  accuracy on unseen conditions and unseen geometry.
+  \item[Surrogate mode.] The model replaces the solver, and is evaluated on
+  its accuracy for conditions and geometries it has not seen.
   \item[Warm-start mode.] The model gives the solver a good first guess to
   start from. Solvers work by improving a guess repeatedly until the answer is
   accurate enough, so a better starting guess means fewer rounds of work. The
   solver still decides when it is finished, so correctness is guaranteed by the
-  solver rather than by the model, and the model is measured only by the
+  solver rather than by the model, and the model is evaluated only on the
   iterations and wall-clock time it saves.
 \end{description}
 
