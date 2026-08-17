@@ -1,0 +1,1085 @@
+% ============================================================
+% Research gap survey, version 1 (arXiv-first).
+% Methods for ML + differential equations: what each family has
+% solved, and what remains open. Grounded in the papers held
+% locally in thesis/literature/{pinn,gnn-operators}/pdfs.
+% Build: tectonic research-gap.tex   (or /pdf gap)
+% ============================================================
+\documentclass[11pt, a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[margin=27mm]{geometry}
+\usepackage{parskip}
+
+\usepackage{amsmath, amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\setlist{itemsep=3pt, topsep=5pt}
+\usepackage[numbers, sort&compress]{natbib}
+\usepackage[hidelinks]{hyperref}
+\usepackage[capitalise, noabbrev]{cleveref}
+\usepackage{titlesec}
+\titleformat{\section}{\large\bfseries}{\thesection}{0.7em}{}
+\titlespacing{\section}{0pt}{16pt}{6pt}
+\titleformat{\subsection}{\bfseries}{\thesubsection}{0.6em}{}
+\titlespacing{\subsection}{0pt}{12pt}{4pt}
+
+\pagestyle{plain}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\title{\vspace{-14mm}\textbf{Machine Learning for Differential Equations}\\[2mm]
+\large Methods, what they have solved, and what remains open\\[1mm]
+\normalsize Version 1: arXiv survey}
+\author{Yapi Donatien Achou\\
+\small Computational Science: Physics, University of Oslo}
+\date{17 August 2026}
+
+\begin{document}
+\maketitle
+
+\section{What this document is}
+
+This is a survey of the methods that apply machine learning to differential
+equations, written to find out what is already solved and what is genuinely
+still open. It exists to locate the research gap for a master's thesis asking
+whether a graph neural network can learn physical laws from simulation data
+and generalise to unseen boundary conditions and unseen domains.
+
+The survey covers 32 papers, all held locally in \texttt{thesis/literature/}
+and grouped one folder per section. They are grouped by what a method does,
+not by which architecture it uses, because the same architecture appears in
+several roles and the roles are what the argument turns on.
+
+The recurring finding is that every family succeeds inside the distribution it
+was trained on, and that the frontier is the same in all of them: unseen
+boundary conditions, unseen geometries and, at the atomistic scale, unseen
+chemistries. \Cref{sec:matrix} states that as a table, and the row marked open
+is the thesis contribution.
+
+\section{How to read this survey}
+
+Each method family gets three parts: the idea in a few sentences, what the
+family has solved with the papers that showed it, and what remains open.
+Paper summaries are deliberately short; the papers themselves are in
+\texttt{thesis/literature/} for deep reading.
+
+Every displayed equation and every quoted number carries a pointer into its
+source, and the pointer names the paper as well as the location inside it, for
+example eq.~(4) of Raissi et al., part~I~\citep{raissi1}. The intent is that
+any single statement here can be checked by opening one named paper at one
+named place.
+
+\section{Physics-informed neural networks}
+\label{sec:pinn}
+
+\subsection{The idea}
+
+A network $u_\theta(t, x)$ represents one solution of one problem, with
+$\theta$ the network weights, $t$ time and $x$ the space coordinate. The
+differential equation itself becomes the loss. Write the equation as eq.~(1)
+of Raissi, Perdikaris and Karniadakis, part~I~\citep{raissi1} does,
+%
+\begin{equation}
+  u_t + \mathcal{N}[u] = 0,
+  \qquad x \in \Omega, \quad t \in [0, T],
+  \label{eq:pinnpde}
+\end{equation}
+%
+where $u_t$ is the time derivative of the solution, $\mathcal{N}[\cdot]$ is
+the nonlinear differential operator that encodes the physics, $\Omega
+\subset \mathbb{R}^D$ is the spatial domain in $D$ dimensions and $T$ is the
+final time.
+
+The residual $f(t, x) := \partial_t u_\theta + \mathcal{N}[u_\theta]$, which
+is eq.~(2) of the same paper~\citep[part~I]{raissi1}, is evaluated by
+automatic differentiation, meaning the same machinery that computes gradients
+for training is reused to differentiate the network with respect to its input
+coordinates. Training then minimises the loss written as eq.~(4) of Raissi
+et al., part~I~\citep{raissi1},
+%
+\begin{equation}
+  \mathcal{L}(\theta)
+  = \underbrace{\frac{1}{N_u}\sum_{i=1}^{N_u}
+      \bigl| u_\theta(t^i_u, x^i_u) - u^i \bigr|^2}_{\text{initial and
+      boundary conditions}}
+  \; + \;
+  \underbrace{\frac{1}{N_f}\sum_{i=1}^{N_f}
+      \bigl| f(t^i_f, x^i_f) \bigr|^2}_{\text{the physics}},
+  \label{eq:pinnloss}
+\end{equation}
+%
+where $\{t^i_u, x^i_u, u^i\}$ are the $N_u$ known values on the boundary and
+at the initial time, and $\{t^i_f, x^i_f\}$ are the $N_f$ collocation points,
+which are locations inside the domain where the residual is checked. Nothing
+is solved to produce collocation points, so they carry no solution values.
+
+\subsection{Does this family need simulation data?}
+
+For a forward problem, no. The supervision is \cref{eq:pinnpde} itself, plus
+the statement of the boundary and initial conditions, so a PINN can be
+trained with no solved instance of the problem at all. This is the property
+Raissi et al.\ emphasise, and they frame the residual term of
+\cref{eq:pinnloss} as a regulariser that makes learning possible in the
+small-data regime~\citep[\S{}1, \S{}2.1]{raissi1}.
+
+Data enters in three other situations. Inverse problems use measurements, in
+practice often generated by a classical solver. Many later papers add
+labelled solution values to stabilise training, which makes them hybrids.
+Validation always needs a reference solution, but that is scoring rather
+than training.
+
+The contrast with the rest of this survey is worth stating plainly, because
+it locates the thesis question. A PINN puts the physics in the loss, needs
+no data, and learns a single instance. The operator and simulator families
+of \cref{sec:simulators,sec:operators} put the physics in the data and the
+architecture, need a solver to generate that data, and learn a whole family
+of problems. Transfer to unseen conditions is a question that can only be
+asked of the second kind.
+
+\subsection{What this family has solved}
+
+\begin{description}[style=nextline]
+  \item[Raissi, Perdikaris and Karniadakis, part I~\citep{raissi1}]
+  Introduced the framework in two variants. The continuous-time model treats
+  $t$ as an ordinary network input~\citep[\S{}2]{raissi1}, while the
+  discrete-time model places a multi-output network on the stages of a
+  general Runge-Kutta scheme with $q$ stages~\citep[\S{}3,
+  eqs.~(7)--(11)]{raissi1}, which lets implicit high-order time stepping and
+  neural networks be used together. On Burgers' equation with viscosity
+  $0.01/\pi$, trained on a few hundred boundary and initial points and
+  optimised with L-BFGS, a quasi-Newton full-batch method, the reported
+  relative $L_2$ error is $6.7 \times 10^{-4}$, about two orders of
+  magnitude better than the Gaussian-process method the same three authors
+  had published earlier, as reported in \S{}2.1 and fig.~1 of
+  part~I~\citep{raissi1}. A Schr\"odinger example uses $50$
+  initial points, $50$ periodic-boundary points and $20\,000$ collocation
+  points placed by Latin hypercube sampling, with a network of five layers
+  and one hundred neurons per layer~\citep[\S{}2.2]{raissi1}. The authors state
+  explicitly that the method is not a replacement for finite elements or
+  spectral methods, which have fifty years of robustness behind them, and
+  they leave uncertainty quantification open~\citep[\S{}4]{raissi1}.
+  \item[Part II~\citep{raissi2}]
+  The inverse side, where the coefficients $\lambda$ of the operator are
+  unknown and are learned jointly with the solution from scattered
+  space-time data, by adding them to the trainable
+  parameters~\citep[eq.~(5)]{raissi2}. On Burgers' equation, $2\,000$ points
+  and a network of nine layers with twenty neurons per layer recover both
+  coefficients to well under one percent on clean data, and the reported
+  errors stay in the range of a few percent at one to ten percent added
+  noise~\citep[Tables~1--2]{raissi2}. On two-dimensional Navier-Stokes the
+  identified equation is $u_t + 0.999(u u_x + v u_y) = -p_x +
+  0.01047\,(u_{xx} + u_{yy})$ against a true coefficient pair of $1$ and
+  $0.01$, degrading only to $0.998$ and $0.01057$ at one percent noise, and
+  the entire pressure field is recovered without a single pressure
+  measurement, up to the additive constant that Navier-Stokes leaves
+  undetermined~\citep[fig.~3]{raissi2}. A Korteweg-de Vries example recovers
+  $u_t + 1.000\,u u_x + 0.0025002\,u_{xxx} = 0$ from two time
+  snapshots~\citep[fig.~5]{raissi2}.
+  This remains the setting where PINNs are genuinely strong, because sparse
+  and noisy data enters the loss naturally, and it is also where simulation
+  data does appear, since the training measurements are drawn from a
+  high-resolution spectral solution.
+  \item[Cuomo et al., survey~\citep{cuomo}]
+  An eighty-five page review organised around three questions: which network
+  is used, how the physical knowledge is represented, and how it is
+  integrated~\citep[\S{}1.1]{cuomo}. It also fixes the vocabulary, noting that
+  \emph{physics-informed}, \emph{physics-based}, \emph{physics-guided} and
+  \emph{theory-guided} are used interchangeably in the literature. Useful as
+  an index rather than a read-through.
+\end{description}
+
+\subsection{What remains open}
+
+\begin{description}[style=nextline]
+  \item[Krishnapriyan et al.~\citep{pinnfailure}]
+  The reference negative result, and the single most useful paper in this
+  folder. On one-dimensional convection with wave speed $\beta$, the plain
+  PINN reaches a relative error of $7.5 \times 10^{-1}$ at $\beta = 20$ and
+  $9.6 \times 10^{-1}$ at $\beta = 40$, that is nearly one hundred percent
+  error after extensive hyperparameter tuning, on a problem with a closed
+  form solution~\citep[\S{}3.1, Table~1]{pinnfailure}. The same happens for
+  reaction-diffusion as the diffusion coefficient $\nu$
+  grows~\citep[eq.~(10), fig.~2]{pinnfailure}. Crucially they show this is
+  not a lack of expressive power in the network; the soft PDE constraint of
+  \cref{eq:pinnloss} makes the optimisation landscape ill-conditioned, and
+  lowering the weight on the residual term buys a smoother landscape at the
+  price of a solution that no longer satisfies the
+  physics~\citep[\S{}4]{pinnfailure}. Two remedies help: curriculum
+  regularisation, which trains at small $\beta$ and reuses those weights to
+  initialise the next $\beta$, cuts the $\beta = 20$ error to $9.8 \times
+  10^{-3}$~\citep[Table~1]{pinnfailure}; and sequence-to-sequence learning,
+  which predicts one time step at a time, cuts a reaction-diffusion case
+  from $5.1 \times 10^{-1}$ to $1.2 \times
+  10^{-2}$~\citep[Table~2]{pinnfailure}. Both remedies require knowing in
+  advance
+  which parameter makes the problem hard, and the second quietly reinstates
+  the time marching that PINNs were meant to avoid.
+  \item[Wang, Yu and Perdikaris~\citep{wangntk}]
+  Supplies the mechanism. They derive the neural tangent kernel of a PINN,
+  the kernel that describes how an infinitely wide network evolves under
+  gradient descent, and prove it converges to a deterministic kernel that
+  stays essentially constant during training~\citep[\S{}4,
+  Theorem~4.4]{wangntk}. The kernel splits into blocks for the boundary term and
+  the residual term, and those blocks have very different eigenvalue scales,
+  so the two parts of \cref{eq:pinnloss} converge at very different
+  rates~\citep[\S{}7.1, figs.~2--3]{wangntk}. Combined with spectral bias, the
+  tendency of such networks to fit smooth components long before sharp ones,
+  this explains why high-frequency or multiscale solutions fail. The
+  practical output is adaptive loss weighting.
+  \item[Wang et al., expert's guide~\citep{expertguide}]
+  The state of the art assembled as a pipeline: non-dimensionalise the
+  equation, add Fourier feature embeddings, apply random weight
+  factorisation, use a modified multilayer perceptron with two input
+  encoders, then train with self-adaptive loss balancing, causal training,
+  curriculum training and time marching~\citep[fig.~1, \S{}6]{expertguide}. The
+  composite loss they minimise separates initial, boundary and residual terms
+  explicitly~\citep[eqs.~(2.5)--(2.8)]{expertguide}. The reported accuracies
+  document a cliff, shown in \cref{tab:pinnaccuracy}: five decimal digits on
+  smooth benchmarks, and roughly ten to twenty percent error as soon as the
+  flow becomes multiscale or turbulent, despite multi-GPU training with
+  $2 \times 10^5$ iterations per time window on the cylinder
+  case~\citep[\S{}7]{expertguide}. For that flow around a cylinder no error is
+  reported at all.
+  \item[Zhang et al., limitations review~\citep{pinnlimits}]
+  Names three root causes~\citep[abstract]{pinnlimits}: the PDE loss
+  approximates multiscale behaviour
+  poorly and is ill-conditioned; convergence and error analysis are
+  underdeveloped, so the mathematical guarantees that finite elements enjoy
+  are missing; and the physics is integrated in a way that leaves the
+  residual mismatched with the actual iteration error, meaning a small loss
+  does not certify a small error.
+\end{description}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Best reported relative $L_2$ errors from the expert's guide
+  pipeline~\citep[Table~1]{expertguide}. The gap between the top and bottom
+  groups is
+  three orders of magnitude, and it tracks how multiscale the solution is.}
+  \label{tab:pinnaccuracy}
+  \begin{tabular}{L{62mm} r}
+    \toprule
+    Benchmark & Relative $L_2$ error \\
+    \midrule
+    Allen-Cahn equation            & $5.37 \times 10^{-5}$ \\
+    Stokes flow                    & $8.04 \times 10^{-5}$ \\
+    Advection equation             & $6.88 \times 10^{-4}$ \\
+    \midrule
+    Lid-driven cavity, $Re = 3200$ & $1.58 \times 10^{-1}$ \\
+    Kuramoto-Sivashinsky equation  & $1.61 \times 10^{-1}$ \\
+    Navier-Stokes in a torus       & $2.45 \times 10^{-1}$ \\
+    Navier-Stokes around a cylinder & not reported \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Two conclusions carry into the rest of this survey. First, accuracy is not
+yet competitive with classical solvers on hard problems, and the original
+authors say so themselves. Second, and decisive for this project, a PINN is
+retrained from scratch for every new instance, so transfer across boundary
+conditions or domains is not merely unsolved, it is outside what the
+formulation can express.
+
+\section{Learned simulators on graphs}
+\label{sec:simulators}
+
+\subsection{The idea}
+
+Represent the discretised system as a graph, with nodes carrying state and
+edges connecting neighbours, and learn the time-stepping map itself by
+message passing. Physics enters twice, through solver-generated training data
+and through the architecture's locality and permutation symmetry. A classical
+integrator usually remains, since the network predicts an acceleration or a
+rate and a plain Euler step turns that into the next state.
+
+\subsection{What this family has solved}
+
+\begin{description}[style=nextline]
+  \item[Battaglia et al.~\citep{battaglia2018}]
+  A position paper rather than an experiment, and worth treating as such. It
+  defines the graph network block as six functions, three that update edges,
+  nodes and a global attribute and three that aggregate them, eq.~(1) of
+  Battaglia et al., and shows that interaction networks, message-passing
+  networks, graph convolutions and self-attention are all special cases. The
+  physics claims it makes are citations to earlier work, not results of its
+  own, so this survey uses it for vocabulary and for the argument that
+  locality and permutation symmetry are the right inductive biases.
+  \item[Sanchez-Gonzalez et al., GNS~\citep{sanchez2020}]
+  Particle-based simulation of water, sand and deformable material in one
+  framework. Particles are nodes, edges join particles within a fixed radius
+  and are rebuilt every step as material moves, the network predicts
+  per-particle acceleration, and a semi-implicit Euler integrator advances the
+  state. Training is one step at a time, with random-walk noise added to input
+  velocities so that rollouts stay stable, a detail without which the method
+  does not work (\S{}4.3 of Sanchez-Gonzalez et al.). Generalisation is the
+  headline: a model trained on about $2\,500$ particles runs a scene that
+  grows to $28\,000$ particles under continuous inflow, and on a domain $32$
+  times larger it reaches $85\,000$ particles over $5\,000$ steps, eight times
+  the training rollout length (\S{}5.3).
+  \item[Pfaff et al., MeshGraphNets~\citep{pfaff2020}]
+  The closest published template to this project. The graph carries two edge
+  types: mesh edges fixed by the mesh connectivity, and world edges added
+  dynamically between nodes that come close in space, which is what lets the
+  model handle contact and self-collision, eq.~(1) of Pfaff et al. Removing
+  the world edges raises rollout error by 51 and 92 percent on two dynamic
+  domains (\S{}5), so the two-edge design is doing real work. Speed is the
+  claim that matters commercially: 21 to 23 milliseconds per step against
+  $820$ for the ground-truth solver on cylinder flow, and 37 to 38
+  milliseconds against $11\,015$ on the aerofoil case, one to two orders of
+  magnitude (Table~1 of Pfaff et al.). A model trained on 400-step
+  trajectories rolls out stably for $40\,000$ steps (\S{}5).
+\end{description}
+
+\subsection{What remains open}
+
+MeshGraphNets is the one paper in this survey with genuine first-party
+evidence of mesh topology transfer. A model trained on rectangular cloth is
+tested on three disconnected fish-shaped flags and on a windsock with
+tassels, whose mesh averages $20\,000$ nodes against about $2\,000$ in
+training (\S{}5 of Pfaff et al.). That is a different topology, not a scaled copy
+of the training domain, and any honest statement of the geometry gap has to
+concede it. The same paper also transfers to unseen physical parameters,
+testing aerofoil angles of attack from $-35$ to $35$ degrees after training on
+$-25$ to $25$, and Mach numbers from $0.7$ to $0.9$ after training on $0.2$ to
+$0.7$, with error rising from $11.5$ to $12.4$ and $13.1$ respectively (\S{}5).
+
+What no paper in this family demonstrates is transfer to a different
+\emph{type} of boundary condition. Node types such as walls, obstacles and
+inflows are fixed per domain, and none of the three papers holds out a
+condition type and tests it unseen.
+
+Cost is the other honest caveat, and GNS reports it against itself. Its own
+timing appendix shows inference ranging from $51$ percent to $345$ percent of
+the ground-truth simulator's step time, meaning it is sometimes slower than
+the solver it imitates (appendix~C.6 of Sanchez-Gonzalez et al.). The
+authors also state that mesh-based representations are future work, that no
+physical symmetries are imposed architecturally, and that efficiency gains
+are not yet realised (\S{}6). Pfaff et al.\ report a decoherence effect in cloth
+after roughly 50 rollout steps, attributed to chaotic dynamics, and
+compensate by reporting a 50-step error alongside the full-trajectory one
+(appendix~A.5.2). Both papers depend on a classical solver to generate
+thousands of training trajectories, which remains the dominant cost.
+
+\section{Neural operators}
+\label{sec:operators}
+
+\subsection{The idea}
+
+Instead of one solution, learn the operator: the map from a problem
+specification, meaning coefficients, forcing or initial data, to the solution
+function. One trained model then serves a whole family of instances, and the
+question of transfer becomes askable, because the model is supposed to handle
+inputs it has not seen.
+
+\subsection{What this family has solved}
+
+\begin{description}[style=nextline]
+  \item[Lu, Jin and Karniadakis, DeepONet~\citep{deeponet}]
+  Gave the field its theoretical footing and a usable architecture. The input
+  function is sampled at fixed sensor locations and fed to a branch network,
+  the query location goes to a trunk network, and the output is their dot
+  product, eq.~(2) of Lu et al., a form justified by the operator
+  universal-approximation statement of their eq.~(1). Their Theorem~2 bounds
+  the number of sensors needed for a target accuracy on an ODE operator, which
+  is rare in this literature. On a diffusion-reaction problem the test error
+  reaches about $10^{-5}$ from only 100 input-function samples (\S{}4.3). Note a
+  structural consequence of the design: the sensor locations must match
+  between training and deployment, so this architecture cannot change
+  resolution.
+  \item[Li et al., graph kernel networks~\citep{gkn}]
+  Made operator learning mesh-independent, and did it with message passing.
+  The operator is built from a kernel integral, eq.~(6) of Li et al., whose
+  discretisation is exactly a message-passing update over neighbours within a
+  radius, their eq.~(10); the kernel is motivated by the Green's function of
+  the elliptic problem, their eq.~(5). Because the kernel is a function of
+  coordinates rather than of grid indices, one parameter set serves many
+  discretisations: trained at $16 \times 16$ and evaluated at $241 \times 241$
+  (fig.~1 and Table~1 of Li et al.), with error essentially flat from $85$ to
+  $421$ points where a convolutional baseline degrades from $0.0253$ to
+  $0.1097$ (Table~8).
+  \item[Li et al., Fourier neural operator~\citep{fno}]
+  The standard baseline, obtained by restricting the kernel to a convolution
+  and parameterising it in Fourier space, eqs.~(3) and~(4) of the FNO paper,
+  keeping only the lowest twelve modes for the two-dimensional cases. It is
+  the most accurate of the three on shared benchmarks, roughly $0.014$ on
+  Burgers across resolutions from $256$ to $8\,192$ points (Table~3) and
+  $0.0108$ on Darcy flow against $0.0244$ for the best classical reduced-basis
+  competitor (Table~4). Two results give the family its reputation: genuine
+  zero-shot super-resolution, training on $64\times64\times20$ data and
+  evaluating at $256\times256\times80$ with no retraining (\S{}5.4), and speed,
+  $0.005$ seconds per evaluation against $2.2$ for the pseudospectral solver,
+  which turns an 18-hour Bayesian inversion into two and a half minutes
+  (\S{}5.5). It should be said plainly that the paper contains no theorems; every
+  claim is empirical.
+  \item[Brandstetter, Worrall and Welling~\citep{brandstetter}]
+  A fully neural message-passing solver, with no classical solver at
+  inference. Boundary conditions and equation coefficients are supplied to the
+  network as an explicit embedding $\theta_{PDE}$ inside the message and
+  update functions, eqs.~(8) and~(9) of Brandstetter et al. The ablation on
+  that embedding is the most useful number in the paper: on a wave problem
+  mixing Dirichlet and Neumann conditions, error is $0.379$ with the
+  embedding and $17.591$ without it, roughly forty-six times worse (Table~2).
+  Telling the model what its boundary conditions are is therefore not
+  optional. Accuracy beats both a fifth-order finite-volume scheme and two FNO
+  variants on the harder generalisation setting, $3.70$ against $15.94$ and
+  $5.98$ (Table~1), at $0.08$ seconds per rollout against $1.7$ for the
+  classical scheme. The paper also contributes the stability techniques,
+  temporal bundling and the pushforward trick, that tame autoregressive error.
+\end{description}
+
+\subsection{What remains open: the frontier this project targets}
+
+Before the frontier papers, the position of the three foundations should be
+stated precisely, because it is easy to overstate. None of DeepONet, the graph
+kernel network or FNO varies the domain shape in any experiment: the domains
+are an interval, a unit square and a torus. None tests a single trained model
+across boundary-condition types, and none tests transfer to a different
+governing equation. Only DeepONet reports an out-of-distribution input
+experiment at all (fig.~5, \S{}4.1.2 of Lu et al.). FNO argues in a short
+paragraph that its architecture is not restricted to periodic conditions, but
+supports this by using different fixed conditions in separate experiments
+rather than by testing one model across types (\S{}5 of the FNO paper). What this
+family solved is resolution and same-distribution inputs, which is a genuine
+achievement and a narrower one than the phrase ``learning the operator''
+suggests.
+
+\begin{description}[style=nextline]
+  \item[Mousavi, Mishra and De Lorenzis~\citep{bcextension}]
+  States the boundary-condition gap directly, ICML 2026: the conditioning of
+  operators on boundary data ``has received very little attention'', and
+  existing methods are restricted to Cartesian geometries, fail to support
+  complex conditions, or degrade when conditions vary across samples (\S{}1 of
+  Mousavi et al.). Their remedy is an extender module that maps boundary data
+  of any type, Dirichlet, Neumann, Robin or mixed, into a latent function
+  defined over the whole domain, so that any domain-to-domain operator can
+  consume it, eqs.~(4) to~(6). Results are strong: $0.02$ to $0.03$ percent
+  error on Poisson against $2.23$ to $3.61$ for the previous
+  boundary-specialised baseline (fig.~2a), and elasticity error cut from
+  $30.6$ to $11.0$ percent (fig.~2b). Against a finite element reference the
+  learned model is comparable in accuracy at $13.8$ against $12.2$ percent and
+  roughly twenty thousand times faster, $5.9$ milliseconds against $125$
+  seconds (Table~1). Their main backbone, RIGNO, is a message-passing graph
+  network.
+  \item[Huang et al., Schwarz neural inference~\citep{domaindecomp}]
+  States the geometry gap directly, ICLR 2026: existing operators ``lack the
+  ability to generalize to entirely novel geometries that differ significantly
+  from those present in the training data distribution'', and the need to
+  generate new data for each new shape is what blocks industrial use (\S{}1 of
+  Huang et al.). Their remedy is local-to-global: train the operator only on
+  small simple polygons, then at inference partition an arbitrary domain with
+  a classical graph partitioner and stitch subdomain solutions with an
+  additive Schwarz iteration, eqs.~(2) and~(3). This is genuine zero-shot
+  geometry transfer, including domains with holes, that is a change of
+  topology, and a dolphin-shaped domain at $4.5$ percent error. Errors fall
+  from 22--28 percent to about $2.1$ percent on Laplace problems and from
+  16--167 percent to 5--8 percent on Darcy (Table~1). One detail matters for
+  this project: their learned operator is a transformer, not a graph network,
+  and their own appendix reports that MeshGraphNets generalises better across
+  domains than the transformer they adopted, with replacing the transformer by
+  a graph network named as future work (appendix~H.4 and appendix~G).
+\end{description}
+
+Now the gap, stated as precisely as the three frontier papers allow. Each of
+them closes one axis and holds the other fixed, and none closes both at once.
+
+Mousavi et al.\ vary boundary conditions richly but fix one geometry per
+dataset, and every cross-geometry or cross-condition-type result in that paper
+comes from fine-tuning on between 8 and 512 samples of the target setting, not
+from zero-shot evaluation (fig.~5 and appendix~F.4). Huang et al.\ achieve
+zero-shot transfer to new shapes but never withhold a boundary-condition type;
+only condition values vary at test time, and the types are all present in
+training (appendix~H.1). Brandstetter et al.\ use a graph network and handle
+mixed condition types, but train on a mixture of them rather than holding one
+out, and never vary the domain shape at all, so the geometry language in that
+paper describes sampling regularity rather than topology.
+
+The empty cell is therefore specific: unseen geometry and unseen
+boundary-condition type, varied together in one experiment, on a mesh-based
+graph network, evaluated with a solver in the loop so that correctness is
+guaranteed rather than hoped for. Nothing in this collection fills it.
+
+Two further observations support attacking it with a graph network rather than
+a transformer or a Fourier operator. Structure helps out of distribution:
+Shaffer et al.\ report $2.14$ percent against $8.90$ percent on unseen
+geometries for an architecture-matched ablation (\S{}\ref{sec:structure}). And
+the geometry paper's own measurement favours graph networks over the
+architecture it used. Neither observation is proof, and both are the kind of
+evidence a proposal should cite rather than assert.
+
+\section{Physics built into the architecture}
+\label{sec:structure}
+
+\subsection{The idea}
+
+Rather than penalising physics violations in the loss, make them
+impossible: choose an architecture whose outputs satisfy the law by
+construction. The loss then only has to fit data, because the physics is
+already true of every function the network can represent.
+
+\subsection{What this family has solved}
+
+\begin{description}[style=nextline]
+  \item[Greydanus, Dzamba and Yosinski, Hamiltonian networks~\citep{hnn}]
+  Learn a scalar $H_\theta(q, p)$ and obtain the dynamics as its symplectic
+  gradient, following Hamilton's equations, eq.~(2) of Greydanus et al., with
+  the network trained on the residual of those equations, their eq.~(3).
+  Energy is then conserved by construction rather than approximately. The
+  effect is dramatic on the metric that matters: on the mass-spring system
+  the energy error falls from $170$ to $0.38$ in the paper's units, and on a
+  pendulum learned from pixels from $9.3$ to $0.15$, against an unconstrained
+  baseline of the same size (Table~1 of Greydanus et al.).
+  \item[Cranmer et al., Lagrangian networks~\citep{lnn}]
+  The same trick without requiring canonical coordinates: learn a Lagrangian
+  and recover accelerations by solving the Euler-Lagrange equation through
+  the network, eq.~(6) of Cranmer et al. This widens the reachable systems,
+  and the paper's showcase is a relativistic particle in non-canonical
+  coordinates where the Hamiltonian version fails. On a double pendulum the
+  energy discrepancy is $0.4$ percent of maximum potential energy against
+  $8$ percent for the unconstrained baseline (\S{}5 of Cranmer et al.). The cost
+  is a Hessian inverse scaling as $O(d^3)$ in the number of coordinates.
+  \item[Shaffer et al., structure-preserving neural PDEs~\citep{structpreserving}]
+  The paper that carries this section, because it is the only one of the
+  three about PDEs on meshes. It learns a reduced finite-element basis
+  conditioned on the mesh together with a discrete flux, then solves the
+  resulting nonlinear system at inference, eqs.~(3), (7) and~(9) of Shaffer
+  et al. Finite element exterior calculus makes conservation structure and
+  Dirichlet conditions exact by construction, and Table~3 of that paper
+  reports boundary error of exactly zero against $10^{-3}$ for the
+  unconstrained encoder. On standard benchmarks it improves on the best prior
+  learned method by 29 percent for elasticity and 71 percent for pipe flow
+  (Table~2, \S{}4.1).
+\end{description}
+
+\subsection{What remains open}
+
+One caveat about how this survey uses the first two papers. They are small
+conservative systems of ordinary differential equations, a pendulum, a
+double pendulum, a two-body problem, and the authors of the Hamiltonian
+paper state the restriction themselves: the method assumes a conserved
+quantity exists and cannot account for friction (\S{}3.2 of Greydanus et al.).
+There are no spatial domains, meshes or boundary conditions in that setting,
+so those papers say nothing directly about the transfer axes this survey
+cares about. They establish the principle; they do not establish it for
+PDEs.
+
+A second caveat concerns the strength of the claim. All three papers compare
+a structurally constrained architecture against an unconstrained one, not
+against a soft-constrained one, so the defensible statement is that built-in
+structure beats no structure. Whether it beats a penalty in the loss is
+untested here, and stating otherwise would overreach. The comparison is
+cleanest in Shaffer et al., whose baseline shares the same encoder and
+differs only by the removal of the structural constraint, which is a real
+ablation rather than a different model.
+
+What that ablation shows is the reason this family appears in the survey at
+all. On unseen geometries the structured model reaches $2.14$ percent error
+against $8.90$ percent for the architecture-matched baseline, and on the
+harder decomposition benchmark the coordinate-based baselines fail outright
+while the structured model still functions (Table~1 of Shaffer et al.). The
+gain is largest exactly where this project is aimed, at out-of-distribution
+geometry.
+
+The remaining gaps are stated by Shaffer et al.\ in their limitations
+section: two dimensions only, steady state only, a computational mesh and
+specified boundary conditions assumed available, extra solve cost against
+direct regression, and a learned constitutive model class restricted by
+stability requirements. Their boundary-condition transfer evidence is also
+weak, being a single qualitative experiment that swaps inlet and outlet
+labels without retraining and reports no error figure, while the main
+out-of-distribution benchmarks explicitly hold boundary conditions fixed as
+geometry varies. Extending exact structure preservation to time-dependent,
+dissipative and coupled multiphysics problems is open, and this is where the
+project's structured-versus-unstructured ablation sits.
+
+\section{Hybrid methods: accelerate the classical solver}
+\label{sec:hybrid}
+
+\subsection{The idea}
+
+Keep the classical solver as the authority and use learning only to reduce
+its iteration count, through warm starts, learned preconditioners or learned
+solver parameters. Correctness is inherited from the solver, because the
+stopping criterion is unchanged, so only speed is at stake. This is the mode
+in which a wrong prediction costs time rather than trust.
+
+\subsection{What this family has solved}
+
+\begin{description}[style=nextline]
+  \item[Eshaghi et al., NOWS~\citep{nows}]
+  The cleanest statement of the warm-start idea. A neural operator trained
+  offline maps the problem specification to an approximate solution, and that
+  prediction is used only as the initial guess $u_0 = \mathcal{G}_\theta(a)$
+  of a Krylov solver, eq.~(5) of Eshaghi et al., which then runs to its usual
+  tolerance under the update rule of their eq.~(6). Discretisation,
+  preconditioner and stopping criterion are untouched. Reported iteration
+  reductions of two- to tenfold and runtime savings of 25 to 90 percent
+  (abstract and \S{}1 of Eshaghi et al.); about 90 percent fewer iterations on
+  an isogeometric plate with voids across 50 unseen void configurations
+  (\S{}3.4, fig.~4c); a Burgers case falling from $9.62$ to $4.75$ seconds on
+  average (\S{}3.5, fig.~5b); and a smoke-plume Navier-Stokes case falling from
+  $69\,703$ to $17\,438$ total iterations, and from $294.74$ to $93.85$
+  seconds, over 150 runs (\S{}3.6). Network inference time is included in the
+  reported totals, though the offline data generation and training cost is
+  not.
+  \item[Zhang, Li and Saad, graph neural multilevel
+  preconditioners~\citep{gnnprecond}]
+  The benchmarking standard this project must meet, and a genuine graph
+  network: message passing within each level of a classical algebraic
+  multigrid hierarchy, with interpolation and restriction replaced by learned
+  bipartite cross-attention, so that restriction need not be the transpose of
+  interpolation, eqs.~(10) and~(17) of Zhang et al. Evaluated on 867
+  non-symmetric SuiteSparse matrices from one thousand to one hundred
+  thousand unknowns, against algebraic multigrid, incomplete factorisation,
+  Jacobi and a single-level graph preconditioner, all under one identical
+  solver protocol (\S{}4.1.1). The learned preconditioner wins on iteration
+  count in 62.1 percent of cases against the single-level version, rising as
+  the tolerance tightens (Table~1), and the multilevel form reaches 72
+  percent (Table~2). Failure rates are far below incomplete factorisation,
+   which fails to construct on 40.14 percent of these matrices (Table~3).
+  Setup cost is disclosed rather than hidden: $210.90$ seconds on average
+  against $103.22$ for algebraic multigrid, with the solve phase five times
+  faster (Table~4).
+  \item[Arisaka and Li, non-intrusive meta-solving~\citep{metasolving}]
+  Learning wrapped around a legacy solver that cannot be differentiated at
+  all, which is the industrial case. A network predicts solver inputs, and
+  since the solver is a black box, its gradient is estimated by a forward
+  probe whose variance is cut by a control variate built from a differentiable
+  surrogate, eq.~(4) with the variance result of their eq.~(7). Demonstrated
+  through PETSc on Poisson, biharmonic and three-dimensional elasticity
+  problems: average iterations fall from $73.74$ to $31.54$ on the biharmonic
+  case and from $88.71$ to $25.61$ on elasticity (Table~3 of Arisaka and Li),
+  and by 74 percent against a supervised-learning baseline for Jacobi
+  (Table~2 and \S{}5.1).
+  \item[Zou, Xu and Zhang, survey~\citep{itersurvey}]
+  Organises the design space into method selection, component optimisation
+  and parameter tuning. Two of its conclusions are useful here: the field has
+  no standard benchmark datasets, which makes published comparisons hard to
+  trust (\S{}5.2 and \S{}5.4 of Zou et al.), and graph networks are named as an
+  underexplored direction precisely because a sparse matrix already is a
+  graph (\S{}5.4).
+\end{description}
+
+\subsection{What remains open}
+
+\begin{description}[style=nextline]
+  \item[Wu et al., are hybrid solvers reliable?~\citep{hybridreliable}]
+  The cautionary paper this project has to answer. It studies hybrids that
+  alternate a classical smoother with a neural correction, and identifies a
+  central failure mode named false fixed points: the iteration update shrinks
+  to around $10^{-4}$ while the true residual sits at about $10^{1}$, so the
+  solver looks converged and is not (fig.~1 and \S{}5.2 of Wu et al.). It also
+  prices the fashionable remedy, since training through unrolled iterations
+  costs $10.90$ times the training time and $1.61$ times the memory for a
+  convergence gain of only $1.16$ to $1.43$ times in one case, and $5.96$
+  times the time with $8.53$ times the memory in another (Table~1, \S{}5.4).
+  Their own fix, using the physical residual rather than the fixed-point
+  update inside Anderson acceleration, converges to $10^{-10}$ on a Helmholtz
+  problem where the standard version stalls near $10^{-2}$ (\S{}5.5, fig.~4a),
+  with wall-clock gains up to $4.50$ times (Table~2). The honest conclusion
+  they draw is that no training objective is universally right and that
+  unrolled training should be used with caution (\S{}6).
+\end{description}
+
+Reading these five together produces the sharpest gap statement in this
+survey, and it is a gap of omission rather than of failure.
+
+Not one of the five tests transfer to a different \emph{type} of boundary
+condition. NOWS and the reliability study both keep homogeneous Dirichlet
+conditions throughout and vary only source terms, coefficient fields or
+resolution. The preconditioner paper operates on bare sparse matrices, where
+boundary conditions have already been compiled away and no longer exist as a
+concept. The meta-solving paper holds the unit domain fixed in every
+experiment.
+
+Geometry fares only slightly better. NOWS varies void configurations in one
+example (\S{}3.4), and the preconditioner paper generalises across unseen grid
+sizes for one equation family, where a single trained model beats
+per-matrix-trained baselines at every size (Table~8, appendix~A.4). Nothing
+here approaches transfer to a genuinely new domain shape.
+
+Two of the papers name this project's exact next step as their own future
+work. Eshaghi et al.\ propose extending warm starts to graph-based operator
+architectures for unstructured meshes (\S{}4), and Zou et al.\ argue graph
+networks are the natural fit for solver components (\S{}5.4). The combination of
+warm starts, graph networks on unstructured meshes, and transfer across
+boundary conditions and geometries is asked for in this literature and not
+answered by it.
+
+\section{Reinforcement learning for solver control}
+\label{sec:rl}
+
+\subsection{The idea}
+
+Reinforcement learning decides where to spend compute rather than what the
+solution is. Adaptive mesh refinement is the mature case: an agent looks at
+the current mesh, chooses which elements to subdivide, and is rewarded for
+error removed per element added. The physics still comes from a conventional
+finite element solver, which is called after every refinement step.
+
+\subsection{What this family has solved}
+
+\begin{description}[style=nextline]
+  \item[Yang et al.~\citep{rlamr1}]
+  Formulates refinement as a Markov decision process over the whole mesh,
+  with reward equal to the normalised error reduction from one refinement
+  step, eq.~(1) of Yang et al., and the discounted return of eq.~(2). Three
+  interchangeable policy heads are compared, a per-element network, a
+  hypernetwork and a graph network built from interaction networks, and the
+  graph network is the strongest on advection problems, that is on moving
+  features (\S{}4.3 and \S{}6.1 of Yang et al.). Reported to match or beat the
+  Zienkiewicz-Zhu error estimator on 20 of 24 cases (\S{}6 of Yang et al.), and
+  a policy trained on an $8 \times 8$ mesh deploys on $200 \times 200$,
+  which is $625$ times more elements (\S{}6.3, fig.~7 of Yang et al.).
+  \item[Foucart, Charous and Lermusiaux~\citep{rlamr2}]
+  Recasts the same task locally: the agent sees one element at a time and
+  chooses to coarsen, do nothing or refine, with a reward that trades
+  accuracy against resource cost through a tunable coefficient, eq.~(4) of
+  Foucart et al. Because the observation is purely local, the policy is
+  independent of mesh size by construction. Reported to preserve solution
+  features at under a quarter of the cost of a classical heuristic in
+  unsteady one-dimensional advection (\S{}4.3 of Foucart et al.), and to need
+  roughly a tenth of the elements on a two-dimensional advecting ring (\S{}4.7
+  of Foucart et al.). Notably, \S{}4.2 of the same paper transfers one trained
+  policy to a different domain, different boundary conditions and a
+  different forcing function, which is a genuine unseen-condition test. The
+  policy is a small multilayer perceptron, not a graph network.
+  \item[Freymuth et al., swarm refinement~\citep{rlswarm}]
+  The most developed of the three, and the only one whose policy is a
+  message-passing graph network over the mesh. Every element is an agent
+  with a binary refine decision, agents split into child agents, and a
+  responsibility mapping propagates credit as elements subdivide, eqs.~(2),
+  (4) and (6) of Freymuth et al. Evaluated on seven problem families
+  including Stokes flow, linear elasticity and three-dimensional Poisson,
+  against uniform refinement, the Zienkiewicz-Zhu estimator, two oracle
+  heuristics with privileged access to a fine reference, and
+  reimplementations of both papers above. A policy trained on unit-square
+  domains deploys on a $20 \times 20$ spiral domain, meshing it in $12.2$
+  seconds against about twenty minutes for the uniform reference, roughly a
+  hundredfold speedup at a mesh error below $10^{-3}$ (\S{}4.5.1, figs.~15
+  and~16 of Freymuth et al.). As few as ten training problems suffice, with
+  gains up to a hundred (\S{}4.3.4 of the same paper).
+\end{description}
+
+\subsection{What remains open}
+
+Freymuth et al.\ state the binding cost in \S{}5 of their paper: the finite
+element system must be solved after every refinement step, both in training
+and at deployment, which becomes expensive on fine meshes, and the reward
+needs an expensive reference solution during training, so the achievable
+resolution is capped by that reference. Their own proposed remedy, learning
+to predict refinement regions directly from the problem conditions without
+repeated solves, is left as future work. The method is also refinement-only,
+stationary, and demonstrated on linear problems.
+
+The other two papers leave related gaps. Yang et al.\ refine one element per
+step, exclude coarsening because it needs a two-objective treatment of error
+against cost, and describe their explanation for beating greedy baselines as
+a conjecture rather than a result (\S{}7 of Yang et al.). Foucart et al.\ flag
+that changing the accuracy-versus-cost coefficient requires retraining, with
+their tunable-policy workaround described as ongoing research.
+
+Two conclusions matter here. First, transfer is taken seriously in this
+family, and Freymuth et al.\ do test unseen domain sizes and unseen material
+parameters, although the geometry result relies on a data-augmentation trick
+that mimics being a patch of a larger mesh rather than on bare geometric
+generalisation. Second, and decisively, in none of the three papers does the
+network ever predict a solution field. The graph network chooses where to
+refine and a classical solver supplies the physics, so this family is a
+control layer over solvers and not a route to learning the physics itself.
+
+\section{The same gap at the atomistic scale}
+\label{sec:atomistic}
+
+\subsection{Why this section exists}
+
+Machine-learned interatomic potentials replace density functional theory
+inside molecular dynamics, and that community has arrived independently at
+the same frontier as the PDE community. The parallel is close enough to be
+useful: chemistry is to a potential what boundary conditions and geometry are
+to an operator, namely the thing the model was never shown and is expected to
+handle anyway.
+
+\subsection{The frontier, stated by the field itself}
+
+\begin{description}[style=nextline]
+  \item[Creed et al., six open questions~\citep{sixquestions}]
+  A 23-author discussion paper, and the strongest single source for the claim
+  above. It organises the state of universal potentials around six questions
+  printed as its section headings: what the minimal definition of an atomistic
+  foundation model is (\S{}1), whether the field needs more data, better data or
+  better models (\S{}2), whether long-range interactions are handled and whether
+  that matters (\S{}3), whether such models can discover genuinely new physics
+  (\S{}4), whether they scale to more useful simulations (\S{}5), and how anyone
+  knows whether a potential is any good (\S{}6). The verdict in \S{}4 is that models
+  learn well within known chemistry and physics but struggle outside their
+  training distribution, and the amplification is brutal: energy errors of
+  $0.008$~eV can produce migration-barrier errors of $0.74$~eV, two orders of
+  magnitude larger (\S{}4.1 of Creed et al.). The paper offers no resolution by
+  design.
+  \item[Wong and Yang, bias and fine-tuning~\citep{mlipbias}]
+  An unseen-chemistry study by construction: a universal MACE potential is
+  applied to a liquid electrolyte whose components are absent from its
+  training set. The pretrained model reaches $21.24$~meV per atom on an
+  independent test set, and iterative fine-tuning brings this to $5.79$, while
+  the naive strategy of sampling fine-tuning data with the biased model itself
+  plateaus near $10$ and produces unphysical dynamics including spurious
+  deprotonation (Tables~1 and~2, fig.~5 of Wong and Yang). The lesson
+  transfers directly to this project: data generated by a biased model cannot
+  cure that model's bias. Only one architecture was tested, which the authors
+  state as a limitation.
+  \item[Chiang et al., MLIP Arena~\citep{mliparena}]
+  A benchmark platform, NeurIPS 2025 datasets and benchmarks track, that
+  evaluates 13 pretrained potentials on physics-grounded tests rather than
+  energy regression alone: smoothness of the potential energy surface,
+  stability under extreme conditions, and robustness under distribution shift
+  measured by a differential-entropy notion of how out-of-distribution a
+  structure is (\S{}2.3 of Chiang et al.). Architecturally equivariant models
+  keep rotational equivariance exactly, while non-equivariant ones degrade as
+  distributional surprise grows, which is direct evidence that built-in
+  structure buys robustness. Their related-work section states the field-wide
+  position plainly: many models saturate existing metrics yet fail to
+  extrapolate to unseen chemistry, strained configurations or
+  finite-temperature behaviour.
+\end{description}
+
+\subsection{The solver side: learned initial guesses}
+
+\begin{description}[style=nextline]
+  \item[Eberhard et al., SAIL~\citep{sail}]
+  The atomistic twin of the warm-start idea of \cref{sec:hybrid}, and an
+  equivariant graph network. Instead of fitting a converged ground state, it
+  learns the starting point of the self-consistent field cycle by
+  differentiating through the solver itself, so the objective is alignment
+  with the solver's trajectory rather than similarity to a target,
+  eqs.~(2)~and~(5) of Eberhard et al. The cycle still runs to convergence, so
+  correctness is inherited exactly as in the hybrid family. Reported
+  iteration-count reductions of 37, 33 and 28 percent for three functionals on
+  molecules up to four times larger than the training set, and a $1.35$-fold
+  wall-clock speedup on molecules ten times larger (Table~1 and figs.~1
+  and~5). One measurement is worth remembering for cost modelling: building
+  the Fock matrix accounts for $97.8$ percent of the work in an iteration
+  (fig.~2 of the same paper).
+  \item[Hazra, Patil and Sanvito~\citep{densitymatrix}]
+  Included as the field's earlier starting point rather than as evidence of
+  transfer. A small dense network, not a graph network and not equivariant,
+  predicts the one-particle density matrix from atomic coordinates, cutting
+  the cycle to one or two iterations and giving a three- to fivefold speedup
+  (Table~I and \S{}III.A of Hazra et al.). Equivariance is imposed by hand,
+  by fixing molecular orientation, which the authors describe as not general.
+  Decisively for this survey, one network is trained per molecule on
+  configurations of that same molecule, and no cross-molecule test is
+  reported, so the paper makes no transfer claim at all.
+\end{description}
+
+\subsection{What remains open}
+
+Eberhard et al.\ list their own boundaries in their limitations section: a
+separate model is needed per exchange-correlation functional and, for matrix
+representations, per basis set; the evaluation covers only hydrogen, carbon,
+nitrogen, oxygen and fluorine; and transfer to heavier elements, to
+non-equilibrium geometries and to periodic systems is untested, with the last
+described as remaining open. So even the best transferable-initialisation
+result is transfer in system size, not in chemistry.
+
+That distinction matters for how this survey uses the analogy. Unseen size is
+demonstrated, unseen chemistry is not, which is precisely the pattern found in
+\cref{sec:operators}, where resolution transfer is solved and boundary
+conditions and geometry are not. The two scales are not merely similar in
+spirit, they are stuck on the same step.
+
+\section{Synthesis: the generalisation matrix}
+\label{sec:matrix}
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \begin{tabular}{@{}L{4.6cm}lL{5.6cm}@{}}
+    \toprule
+    Generalisation axis & Status & Evidence \\
+    \midrule
+    New forcing or coefficients, within the training distribution &
+    largely solved & operator learning~\citep{deeponet, fno} \\
+    \addlinespace
+    New mesh resolution &
+    solved for spectral operators & zero-shot
+    super-resolution~\citep{fno}; mesh-invariant kernels~\citep{gkn} \\
+    \addlinespace
+    Larger systems, longer rollouts &
+    partly solved & particle and mesh simulators~\citep{sanchez2020,
+    pfaff2020}, with stability tricks~\citep{brandstetter} \\
+    \addlinespace
+    \textbf{Unseen boundary-condition types} &
+    \textbf{open} & gap stated in print, and closed only by fine-tuning on
+    the target setting~\citep{bcextension}; mixed types trained as a
+    mixture, never held out~\citep{brandstetter} \\
+    \addlinespace
+    \textbf{Unseen geometries} &
+    \textbf{partly open} & mesh topology transfer demonstrated for
+    cloth~\citep{pfaff2020}; zero-shot for shapes with holes, but with a
+    transformer, not a graph network~\citep{domaindecomp}; structure helps
+    out of distribution~\citep{structpreserving} \\
+    \addlinespace
+    \textbf{Both together, in one experiment} &
+    \textbf{open} & each frontier paper closes one axis and fixes the
+    other~\citep{bcextension, domaindecomp, brandstetter} \\
+    \addlinespace
+    \textbf{Unseen chemistries (atomistic)} &
+    \textbf{open} & field-stated open questions~\citep{sixquestions};
+    bias on unseen chemistry~\citep{mlipbias}; benchmark
+    evidence~\citep{mliparena} \\
+    \addlinespace
+    A different governing equation &
+    far open & no credible general result to date \\
+    \bottomrule
+  \end{tabular}
+  \caption{What is solved and what is open, per generalisation axis. The
+  bold rows are the research gap this project addresses; the last row is
+  deliberately out of scope.}
+  \label{tab:matrix}
+\end{table}
+
+Three observations close the survey.
+
+Every family performs inside its training distribution, and the frontier
+is the same everywhere: the axes along which real applications vary, since
+every patient, reservoir and molecule is a new boundary condition,
+geometry or chemistry.
+
+The most promising lever reported so far is structure in the architecture
+rather than volume of data~\citep{structpreserving, hnn}, which is a
+testable hypothesis rather than a folklore claim.
+
+And the hybrid deployment mode~\citep{nows, gnnprecond} changes what
+failure costs: outside the distribution a surrogate is silently wrong,
+while a warm start merely saves fewer iterations. Measuring where those
+two behaviours separate is precisely the proposal built on this survey.
+
+\begin{thebibliography}{99}
+\small
+
+\bibitem{raissi1} M.~Raissi, P.~Perdikaris and G.~E. Karniadakis. Physics
+informed deep learning (part I): data-driven solutions of nonlinear partial
+differential equations. arXiv:1711.10561, 2017.
+
+\bibitem{raissi2} M.~Raissi, P.~Perdikaris and G.~E. Karniadakis. Physics
+informed deep learning (part II): data-driven discovery of nonlinear
+partial differential equations. arXiv:1711.10566, 2017.
+
+\bibitem{cuomo} S.~Cuomo et al. Scientific machine learning through
+physics-informed neural networks: where we are and what's next.
+arXiv:2201.05624, 2022.
+
+\bibitem{pinnfailure} A.~S. Krishnapriyan et al. Characterizing possible
+failure modes in physics-informed neural networks. NeurIPS 2021; arXiv:2109.01050.
+
+\bibitem{wangntk} S.~Wang, X.~Yu and P.~Perdikaris. When and why PINNs
+fail to train: a neural tangent kernel perspective. arXiv:2007.14527, 2020.
+
+\bibitem{expertguide} S.~Wang et al. An expert's guide to training
+physics-informed neural networks. arXiv:2308.08468, 2023.
+
+\bibitem{pinnlimits} W.~Zhang et al. Physics-informed neural networks as
+intelligent computing technique for solving PDEs: limitation and future
+prospects. arXiv:2411.18240, 2024.
+
+\bibitem{battaglia2018} P.~W. Battaglia et al. Relational inductive biases,
+deep learning, and graph networks. arXiv:1806.01261v3, October 2018. Position paper; no first-party experiments.
+
+\bibitem{sanchez2020} A.~Sanchez-Gonzalez et al. Learning to simulate
+complex physics with graph networks. ICML 2020, PMLR vol.~119; arXiv:2002.09405.
+
+\bibitem{pfaff2020} T.~Pfaff et al. Learning mesh-based simulation with
+graph networks. ICLR 2021; arXiv:2010.03409v4.
+
+\bibitem{deeponet} L.~Lu, P.~Jin and G.~E. Karniadakis. DeepONet: learning
+nonlinear operators based on the universal approximation theorem of
+operators. arXiv:1910.03193v3, April 2020.
+
+\bibitem{gkn} Z.~Li et al. Neural operator: graph kernel network for
+partial differential equations. arXiv:2003.03485, March 2020.
+
+\bibitem{fno} Z.~Li et al. Fourier neural operator for parametric partial
+differential equations. ICLR 2021; arXiv:2010.08895v3.
+
+\bibitem{brandstetter} J.~Brandstetter, D.~E. Worrall and M.~Welling.
+Message passing neural PDE solvers. ICLR 2022; arXiv:2202.03376v3.
+
+\bibitem{hnn} S.~Greydanus, M.~Dzamba and J.~Yosinski. Hamiltonian neural
+networks. NeurIPS 2019; arXiv:1906.01563v3.
+
+\bibitem{lnn} M.~Cranmer et al. Lagrangian neural networks.
+arXiv:2003.04630v2, July 2020.
+
+\bibitem{bcextension} S.~Mousavi, S.~Mishra and L.~De Lorenzis. Imposing
+boundary conditions on neural operators via learned function extensions.
+ICML 2026, PMLR vol.~306; arXiv:2602.04923v2, May 2026.
+
+\bibitem{domaindecomp} J.~Huang et al. Operator learning with domain
+decomposition for geometry generalization in PDE solving. ICLR 2026; arXiv:2504.00510v2, February 2026.
+
+\bibitem{structpreserving} B.~D. Shaffer, S.~Koohy, B.~Kinch,
+M.~A.~Hsieh and N.~Trask. Structure-preserving learning improves geometry
+generalization in neural PDEs. ICML 2026, PMLR vol.~306; arXiv:2602.02788v2,
+June 2026.
+
+\bibitem{nows} M.~S.~Eshaghi, C.~Anitescu, N.~Valizadeh et al. NOWS:
+neural operator warm starts for accelerating iterative solvers.
+arXiv:2511.02481v4, May 2026.
+
+\bibitem{gnnprecond} Z.~Zhang, R.~P.~Li and Y.~Saad. Graph neural
+multilevel preconditioners for iterative solvers. KDD~'26;
+arXiv:2607.28456, July 2026.
+
+\bibitem{metasolving} S.~Arisaka and Q.~Li. Accelerating legacy numerical
+solvers by non-intrusive gradient-based meta-solving. ICML 2024, PMLR
+vol.~235; arXiv:2405.02952.
+
+\bibitem{itersurvey} H.~Zou, X.~Xu and C.-S.~Zhang. A survey on
+intelligent iterative methods for solving sparse linear algebraic equations.
+arXiv:2310.06630, 2023.
+
+\bibitem{hybridreliable} Y.~Wu, J.~W.~van Beek, V.~Dolean and
+A.~Heinlein. Are deep learning based hybrid PDE solvers reliable? Why
+training paradigms and update strategies matter. arXiv:2602.06842v2, June
+2026.
+
+\bibitem{rlamr1} J.~Yang, T.~Dzanic, B.~Petersen et al. Reinforcement
+learning for adaptive mesh refinement. AISTATS 2023, PMLR vol.~206;
+arXiv:2103.01342.
+
+\bibitem{rlamr2} C.~Foucart, A.~Charous and P.~F.~J.~Lermusiaux. Deep
+reinforcement learning for adaptive mesh refinement. arXiv:2209.12351, 2022.
+
+\bibitem{rlswarm} N.~Freymuth, P.~Dahlinger, T.~W\"urth, S.~Reisch,
+L.~K\"arger and G.~Neumann. Adaptive swarm mesh refinement using deep
+reinforcement learning with local rewards. arXiv:2406.08440v2, January 2026;
+extended version of the earlier ASMR conference paper, method named ASMR++.
+
+\bibitem{sixquestions} I.~Creed, T.~Rein, I.~Vitenburgs et al.\ (23
+authors). Six open questions in machine-learned interatomic potential
+foundation models. arXiv:2606.07327v2, June 2026.
+
+\bibitem{mlipbias} N.~H.~Wong and J.~H.~Yang. Bias in universal
+machine-learned interatomic potentials and its effects on fine-tuning.
+arXiv:2603.10159v2, June 2026.
+
+\bibitem{mliparena} Y.~Chiang, T.~Kreiman, C.~Zhang et al. MLIP Arena:
+advancing fairness and transparency in machine learning interatomic
+potentials via an open, accessible benchmark platform. NeurIPS 2025,
+datasets and benchmarks track; arXiv:2509.20630v2.
+
+\bibitem{sail} E.~S.~Eberhard, V.~Kotsev, T.~G\"uthle and
+S.~G\"unnemann. Transferable SCF-acceleration through solver-aligned
+initialization learning. arXiv:2604.21657v2, May 2026.
+
+\bibitem{densitymatrix} S.~Hazra, U.~Patil and S.~Sanvito. Predicting
+the one-particle density matrix with
+machine learning. arXiv:2401.06533, 2024.
+
+\end{thebibliography}
+
+\end{document}
