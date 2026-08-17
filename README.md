@@ -12,10 +12,18 @@ and quantum mechanics (Kohn-Sham density functional theory), with one trained
 model per scale. What carries across the scales is the architecture family,
 the question, and the evaluation protocol, not the weights.
 
-At each scale the model is evaluated in two modes: as a surrogate that
-replaces the solver, measured by accuracy on unseen conditions and geometry,
-and as a warm start that seeds the solver, measured by iterations and time
-saved while the solver still guarantees correctness.
+At each scale the model is used in two ways.
+
+In the first, called surrogate mode, the model replaces the solver and
+predicts the answer directly. It is judged on how accurate that answer is for
+conditions and shapes it was never trained on.
+
+In the second, called warm-start mode, the model gives the solver a good
+first guess to start from. Solvers work by improving a guess over and over
+until the answer is accurate enough, so a better starting guess means fewer
+rounds of work. The solver still decides when it is finished, so the answer is
+as correct as it always was, and the model is judged only on how much work it
+saved.
 
 ## Repository structure
 
