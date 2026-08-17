@@ -1,9 +1,9 @@
 # Thesis literature, organised by method family
 
-One folder per method family of the research gap survey
-(`../research-gap.pdf`). Each folder holds a `README.md` index, a
-`fetch.sh` that re-downloads its papers from arXiv, and a local `pdfs/`
-kept out of git.
+One folder per method family of the research-gap survey
+(`../research-gap/research-gap.pdf`). Each folder contains a `README.md`
+index, the papers used by the survey in `pdfs/`, and a `fetch.sh` script for
+papers that can be retrieved from arXiv.
 
 | Folder | Survey section | Papers |
 |---|---|---|
@@ -15,10 +15,10 @@ kept out of git.
 | `rl-solver-control/` | 7, RL for solver control | 3 |
 | `atomistic-scf/` | 8, the same gap at the atomistic scale | 5 |
 
-Two survey references are journal-only and not fetchable from arXiv:
-the npj Computational Materials paper on neural-network self-consistent
-fields, and the Nature Communications paper on cross-domain MLIP transfer.
-Read those through university access.
+Two survey references are journal-only and not fetchable from arXiv: the
+npj Computational Materials paper on neural-network self-consistent fields,
+and the Nature Communications paper on cross-domain MLIP transfer. Read those
+through university access.
 
-To restore everything on a fresh machine:
-`for d in */; do "$d/fetch.sh"; done`
+The papers remain the intellectual property of their respective authors and
+publishers and are included here for academic reference.
