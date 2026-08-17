@@ -50,47 +50,43 @@ Claude Code (Anthropic)\\
 A graph neural network that learns physical laws from simulation data and
 generalises to unseen boundary and initial conditions and unseen domains.
 
-\subsection*{Across two scales}
+The question is asked at two scales:
 
-\begin{description}[style=nextline, leftmargin=0pt]
-  \item[Continuum mechanics]
-  Porous media flow: Darcy flow, transport, poroelasticity.
-  \item[Quantum mechanics]
-  Kohn-Sham density functional theory, the self-consistent field problem.
+\begin{description}[style=unboxed, leftmargin=0pt, itemsep=2pt]
+  \item[Continuum mechanics.] Porous media flow: Darcy flow, transport,
+  poroelasticity.
+  \item[Quantum mechanics.] Kohn-Sham density functional theory, the
+  self-consistent field problem.
 \end{description}
 
-\subsection*{Evaluated in two modes at each scale}
+At each scale the model is used in two ways:
 
-\begin{description}[style=nextline, leftmargin=0pt]
-  \item[Surrogate mode]
-  The model replaces the solver. Measured by accuracy on unseen conditions
-  and unseen geometry.
-  \item[Warm-start mode]
-  The model gives the solver a good first guess to start from. Solvers work by
-  improving a guess repeatedly until the answer is accurate enough, so a
-  better starting guess means fewer rounds of work. The solver still decides
-  when it is finished. Measured by iterations and wall-clock time saved, with
-  correctness guaranteed by the solver rather than by the model.
+\begin{description}[style=unboxed, leftmargin=0pt, itemsep=2pt]
+  \item[Surrogate mode.] The model replaces the solver, and is measured by
+  accuracy on unseen conditions and unseen geometry.
+  \item[Warm-start mode.] The model gives the solver a good first guess to
+  start from. Solvers work by improving a guess repeatedly until the answer is
+  accurate enough, so a better starting guess means fewer rounds of work. The
+  solver still decides when it is finished, so correctness is guaranteed by the
+  solver rather than by the model, and the model is measured only by the
+  iterations and wall-clock time it saves.
 \end{description}
 
-\subsection*{What the axes become at the quantum scale}
+\textbf{What the axes become at the quantum scale.} The external potential
+plays the role that boundary conditions and coefficients play at the continuum
+scale. It is set by the nuclei, which is chemistry, and by the treatment of
+the cell, meaning an isolated molecule against a periodic crystal. So unseen
+boundary conditions and geometry becomes unseen chemistry and unseen cell
+type.
 
-The external potential plays the role that boundary conditions and
-coefficients play at the continuum scale. It is set by the nuclei, which is
-chemistry, and by the treatment of the cell, meaning an isolated molecule
-against a periodic crystal. So unseen boundary conditions and geometry
-becomes unseen chemistry and unseen cell type.
+Both are stated as open in the literature surveyed below: chemistry by the six
+open questions on foundation-model potentials~\citep{sixquestions}, and
+transfer to periodic systems by the limitations section of the solver-aligned
+initialisation work~\citep{sail}.
 
-Both are stated as open in the literature surveyed below: chemistry by the
-six open questions on foundation-model potentials~\citep{sixquestions}, and
-transfer to periodic systems by the limitations section of the
-solver-aligned initialisation work~\citep{sail}.
-
-\subsection*{One precision}
-
-One trained model per scale, not one model spanning both. What transfers
-across scales is the architecture family, the question being asked, and the
-evaluation protocol, not the weights.
+\textbf{One precision.} One trained model per scale, not one model spanning
+both. What transfers across scales is the architecture family, the question
+being asked, and the evaluation protocol, not the weights.
 
 \section{What this document is}
 
