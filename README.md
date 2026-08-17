@@ -44,9 +44,10 @@ The compiled document is also available as
 
 ## Literature
 
-The `thesis/literature/` directory contains the papers used in the survey,
-organised by method family. Each family includes an index describing its
-papers and, where available, a script for retrieving them from arXiv.
+The [`thesis/literature/`](thesis/literature/) directory contains the papers
+used in the survey, organised by method family. Each family includes an index
+describing its papers and, where available, a script for retrieving them from
+arXiv.
 
 The papers remain the intellectual property of their respective authors and
 publishers and are included here for academic reference.
