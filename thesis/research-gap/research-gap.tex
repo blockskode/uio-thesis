@@ -245,7 +245,7 @@ asked of the second kind.
 \begin{description}[style=nextline]
   \item[Krishnapriyan et al.~\citep{pinnfailure}]
   The reference negative result, and the single most useful paper in this
-  folder. On one-dimensional convection with wave speed $\beta$, the plain
+  section. On one-dimensional convection with wave speed $\beta$, the plain
   PINN reaches a relative error of $7.5 \times 10^{-1}$ at $\beta = 20$ and
   $9.6 \times 10^{-1}$ at $\beta = 40$, that is nearly one hundred percent
   error after extensive hyperparameter tuning, on a problem with a closed
@@ -290,8 +290,7 @@ asked of the second kind.
   smooth benchmarks, and roughly ten to twenty percent error as soon as the
   flow becomes multiscale or turbulent, despite multi-GPU training with
   $2 \times 10^5$ iterations per time window on the cylinder
-  case~\citep[\S{}7]{expertguide}. For that flow around a cylinder no error is
-  reported at all.
+  case~\citep[\S{}7]{expertguide}. For the cylinder case no error is reported at all.
   \item[Zhang et al., limitations review~\citep{pinnlimits}]
   Names three root causes~\citep[abstract]{pinnlimits}: the PDE loss
   approximates multiscale behaviour
@@ -400,8 +399,8 @@ What no paper in this family demonstrates is transfer to a different
 inflows are fixed per domain, and none of the three papers holds out a
 condition type and tests it unseen.
 
-Cost is the other honest caveat, and GNS reports it against itself. Its own
-timing appendix shows inference ranging from $51$ percent to $345$ percent of
+Cost is the other honest caveat, and the GNS authors report it about their
+own method. Their timing appendix shows inference ranging from $51$ percent to $345$ percent of
 the ground-truth simulator's step time, meaning it is sometimes slower than
 the solver it imitates (appendix~C.6 of Sanchez-Gonzalez et al.). The
 authors also state that mesh-based representations are future work, that no
@@ -531,8 +530,11 @@ suggests.
   a graph network named as future work (appendix~H.4 and appendix~G).
 \end{description}
 
-Now the gap, stated as precisely as the three frontier papers allow. Each of
-them closes one axis and holds the other fixed, and none closes both at once.
+Now the gap. Three papers sit at this frontier: Mousavi et al.\ and Huang
+et al.\ just described, and Brandstetter et al.\ from the previous
+subsection. Two things can vary between training and deployment, the type of
+boundary condition and the shape of the domain. Each of the three papers
+handles one of them and holds the other fixed, and none handles both at once.
 
 Mousavi et al.\ vary boundary conditions richly but fix one geometry per
 dataset, and every cross-geometry or cross-condition-type result in that paper
@@ -545,17 +547,18 @@ mixed condition types, but train on a mixture of them rather than holding one
 out, and never vary the domain shape at all, so the geometry language in that
 paper describes sampling regularity rather than topology.
 
-The empty cell is therefore specific: unseen geometry and unseen
+The untested combination is therefore specific: unseen geometry and unseen
 boundary-condition type, varied together in one experiment, on a mesh-based
 graph network, evaluated with a solver in the loop so that correctness is
-guaranteed rather than hoped for. Nothing in this collection fills it.
+guaranteed rather than hoped for. Nothing in this collection does that, which
+is the open row of \cref{tab:matrix}.
 
 Two further observations support attacking it with a graph network rather than
 a transformer or a Fourier operator. Structure helps out of distribution:
 Shaffer et al.\ report $2.14$ percent against $8.90$ percent on unseen
-geometries for an architecture-matched ablation (\S{}\ref{sec:structure}). And
-the geometry paper's own measurement favours graph networks over the
-architecture it used. Neither observation is proof, and both are the kind of
+geometries for an architecture-matched ablation (\cref{sec:structure}). And
+Huang et al.\ measured graph networks generalising across domains better than
+the transformer they themselves adopted. Neither observation is proof, and both are the kind of
 evidence a proposal should cite rather than assert.
 
 \section{Physics built into the architecture}
@@ -604,7 +607,8 @@ already true of every function the network can represent.
 
 \subsection{What remains open}
 
-One caveat about how this survey uses the first two papers. They are small
+One caveat about how this survey uses the Hamiltonian and Lagrangian papers.
+They are small
 conservative systems of ordinary differential equations, a pendulum, a
 double pendulum, a two-body problem, and the authors of the Hamiltonian
 paper state the restriction themselves: the method assumes a conserved
@@ -687,7 +691,7 @@ in which a wrong prediction costs time rather than trust.
   count in 62.1 percent of cases against the single-level version, rising as
   the tolerance tightens (Table~1), and the multilevel form reaches 72
   percent (Table~2). Failure rates are far below incomplete factorisation,
-   which fails to construct on 40.14 percent of these matrices (Table~3).
+  which fails to construct on 40.14 percent of these matrices (Table~3).
   Setup cost is disclosed rather than hidden: $210.90$ seconds on average
   against $103.22$ for algebraic multigrid, with the solve phase five times
   faster (Table~4).
@@ -732,8 +736,8 @@ in which a wrong prediction costs time rather than trust.
   unrolled training should be used with caution (\S{}6).
 \end{description}
 
-Reading these five together produces the sharpest gap statement in this
-survey, and it is a gap of omission rather than of failure.
+Reading the five papers of this section together produces the sharpest gap
+statement in this survey, and it is a gap of omission rather than of failure.
 
 Not one of the five tests transfer to a different \emph{type} of boundary
 condition. NOWS and the reliability study both keep homogeneous Dirichlet
@@ -855,8 +859,8 @@ handle anyway.
 
 \begin{description}[style=nextline]
   \item[Creed et al., six open questions~\citep{sixquestions}]
-  A 23-author discussion paper, and the strongest single source for the claim
-  above. It organises the state of universal potentials around six questions
+  A 23-author discussion paper, and the strongest single source for the
+  parallel just drawn. It organises the state of universal potentials around six questions
   printed as its section headings: what the minimal definition of an atomistic
   foundation model is (\S{}1), whether the field needs more data, better data or
   better models (\S{}2), whether long-range interactions are handled and whether
